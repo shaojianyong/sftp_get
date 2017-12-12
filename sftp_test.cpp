@@ -1,4 +1,4 @@
-include <iostream>
+#include <iostream>
 #include "sftp_get.h"
 
 using namespace std;
@@ -6,7 +6,7 @@ using namespace std;
 int main(int argc, char** argv)
 {
     SftpGet fg;
-    int ret = fg.connect("127.0.0.1", 22, "johnshao", "johnshao");
+    int ret = fg.connect("127.0.0.1", 22, "root", "johnshao");
     if (ret)
     {
         string errmsg = fg.getLastError();
@@ -16,7 +16,7 @@ int main(int argc, char** argv)
 
     int len = 1024 * 1024;
     char buf[len] = { 0 };
-    ret = fg.sftp_read("Downloads/bill.txt", buf, &len);
+    ret = fg.sftp_read("interview/binary_find.cpp", buf, &len);
     if (ret)
     {
         string errmsg = fg.getLastError();
@@ -25,7 +25,7 @@ int main(int argc, char** argv)
     }
     cout << string(buf, len) << endl;
 
-    ret = fg.download("Downloads/bill.txt", "bill.txt");
+    ret = fg.download("interview/binary_find.cpp", "binary_find.cpp");
     if (ret)
     {
         string errmsg = fg.getLastError();

@@ -5,9 +5,10 @@
 #define __SFTP_GET__
 
 #include <string>
-using namespace std;
+#include "libssh2.h"
+#include "libssh2_sftp.h"
 
-const int MAX_FILE_SIZE = 5 * 1024 * 1024;
+using namespace std;
 
 class SftpGet {
 public:
@@ -17,7 +18,7 @@ public:
 public:
     int connect(const char* host, int port, const char* username, const char* password);
 
-    int sftp_read(const char* remoteFile, char* data_buf, int** data_len);
+    int sftp_read(const char* remoteFile, char* data_buf, int* data_len);
 
     int download(const char* remoteFile, const char* localPath);
 
@@ -27,7 +28,7 @@ public:
 
 private:
     int m_socket;
-    char* m_lastError[1024];
+    char m_lastError[1024];
     LIBSSH2_SESSION* m_sshSession;
     LIBSSH2_SFTP* m_sftpSession;
 };

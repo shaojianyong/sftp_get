@@ -2,10 +2,18 @@
  * SFTP download by libssh2
  */
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <errno.h>
 #include <stdio.h>
-#include "libssh2.h"
-#include "libssh2_sftp.h"
+#include <unistd.h>
+#include <ctype.h>
 
+#include "sftp_get.h"
 
 SftpGet::SftpGet()
     : m_socket(0)
@@ -29,12 +37,13 @@ int SftpGet::connect(const char* host, int port, const char* username, const cha
 
     m_socket = socket(AF_INET, SOCK_STREAM, 0);
 
+    sockaddr_in sin;
     sin.sin_family = AF_INET;
     sin.sin_port = htons(port);
     sin.sin_addr.s_addr = inet_addr(host);
-    if (connect(m_socket, (struct sockaddr*)(&sin), sizeof(struct sockaddr_in)) != 0)
+    if (::connect(m_socket, (struct sockaddr*)(&sin), sizeof(struct sockaddr_in)) != 0)
     {
-        snprintf(m_lastError, "failed to connect!");
+        snprintf(m_lastError, sizeof(m_lastError), "failed to connect!");
         return -1;
     }
 
@@ -42,8 +51,8 @@ int SftpGet::connect(const char* host, int port, const char* username, const cha
     m_sshSession = libssh2_session_init();
     if(!m_sshSession)
     {
-        snprintf(m_lastError, "libssh2_session_init failed!");
-        return -1
+        snprintf(m_lastError, sizeof(m_lastError), "libssh2_session_init failed!");
+        return -1;
     }
 
     // Since we have set non-blocking, tell libssh2 we are blocking
@@ -125,25 +134,39 @@ int SftpGet::sftp_read(const char* remoteFile, char* data_buf, int* data_len)
 
 int SftpGet::download(const char* remoteFile, const char* localPath)
 {
-    int len = MAX_FILE_SIZE;
-    char* buf = new char[len];
-
-    int rc = sftp_read(remoteFile, buf, &ilen);
-    if (rc)
+    // Request a file via SFTP
+    LIBSSH2_SFTP_HANDLE* sftpHandle = libssh2_sftp_open(m_sftpSession, remoteFile, LIBSSH2_FXF_READ, 0);
+    if (!sftpHandle)
     {
-        return rc;
+        snprintf(m_lastError, sizeof(m_lastError), "Unable to open file with SFTP: %ld\n",
+            libssh2_sftp_last_error(m_sftpSession));
+        return -1;
     }
 
-    FILE* fp = fopen(localPath, 'w');
-    if (fp)
+    // libssh2_sftp_open() is done, now receive data!
+    FILE* fp = fopen(localPath, "w");
+    if (!fp)
     {
-        fwrite(buf, 1, len, fp);
-    }
-    else
-    {
-        snprintf(m_lastError, sizeof(m_lastError), strerror(errno));
+        snprintf(m_lastError, sizeof(m_lastError), "Fail to create file: %s", localPath);
         return 2;
     }
+
+    char buf[1024];
+    while(1)
+    {
+        int sz = libssh2_sftp_read(sftpHandle, buf, sizeof(buf));
+        if (sz > 0)
+        {
+            fwrite(buf, 1, sz, fp);
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    fclose(fp);
+    libssh2_sftp_close(sftpHandle);
     return 0;
 }
 
@@ -164,7 +187,7 @@ void SftpGet::close()
 
     if (m_socket)
     {
-        close(m_socket);
+        ::close(m_socket);
         m_socket = 0;
     }
     libssh2_exit();
