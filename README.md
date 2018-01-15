@@ -9,8 +9,18 @@ Host 32.64.205.89
     ProxyCommand        /usr/bin/nc -X connect -x 192.168.6.156:9998 %h 22
     ServerAliveInterval 10
 ```
-现在命令行中就不需要指定代理选项，也可以访问SFTP服务器了：
-sftp qqstaging@32.64.205.89
+现在命令行中就不需要指定代理选项，也可以访问SFTP服务器了：<br>
+```
+sftp qqstaging@32.64.205.89<br>
+```
+如果报错如下错误：
+```
+Bad owner or permissions on .ssh/config
+```
+请执行下面的命令，修改config文件的权限：
+```
+chmod 600 config
+```
 
 # 使用expect自动完成交互
 ## 记录交互过程（正常）
