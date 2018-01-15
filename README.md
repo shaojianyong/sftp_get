@@ -1,12 +1,14 @@
 # 通过代理访问SFTP服务器
-sftp -v -o ProxyCommand='/usr/bin/nc -v -X connect  -x 192.168.6.156:9998 %h 22' qqstaging@32.64.205.89
+sftp -v -o ProxyCommand='/usr/bin/nc -v -X connect  -x 192.168.6.156:9998 %h 22' qqstaging@32.64.205.89<br>
 如果不想看到一大堆输出，两个-v选项都可以去掉。
 
 # 把代理配置放在config文件中
 创建~/.ssh/config文件，粘贴如下内容：
+```
 Host 32.64.205.89
     ProxyCommand        /usr/bin/nc -X connect -x 192.168.6.156:9998 %h 22
     ServerAliveInterval 10
+```
 现在命令行中就不需要指定代理选项，也可以访问SFTP服务器了：
 sftp qqstaging@32.64.205.89
 
