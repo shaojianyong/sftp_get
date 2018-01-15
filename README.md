@@ -1,21 +1,21 @@
 # 通过代理访问SFTP服务器
-sftp -v -o ProxyCommand='/usr/bin/nc -v -X connect  -x 10.197.6.156:8889 %h 22' tencentstaging@52.76.208.88
+sftp -v -o ProxyCommand='/usr/bin/nc -v -X connect  -x 192.168.6.156:9998 %h 22' qqstaging@32.64.205.89
 如果不想看到一大堆输出，两个-v选项都可以去掉。
 
 # 把代理配置放在config文件中
 创建~/.ssh/config文件，粘贴如下内容：
-Host 52.76.208.88
-    ProxyCommand        /usr/bin/nc -X connect -x 10.197.6.156:8889 %h 22
+Host 32.64.205.89
+    ProxyCommand        /usr/bin/nc -X connect -x 192.168.6.156:9998 %h 22
     ServerAliveInterval 10
 现在命令行中就不需要指定代理选项，也可以访问SFTP服务器了：
-sftp tencentstaging@52.76.208.88
+sftp qqstaging@32.64.205.89
 
 # 使用expect自动完成交互
 ## 记录交互过程（正常）
 ```
-[justinshao@DevTJ-todo-1507091995 ~/tranglo/popen]$ sftp tencentstaging@52.76.208.88
-Connecting to 52.76.208.88...
-tencentstaging@52.76.208.88's password: 
+[justinshao@DevTJ-todo-1507091995 ~/tranglo/popen]$ sftp qqstaging@32.64.205.89
+Connecting to 32.64.205.89...
+qqstaging@32.64.205.89's password: 
 sftp> cd TencentStaging
 sftp> get DAILY_STATEMENT_ID_2017-12-30.csv
 Fetching /TencentStaging/DAILY_STATEMENT_ID_2017-12-30.csv to DAILY_STATEMENT_ID_2017-12-30.csv
@@ -25,11 +25,11 @@ sftp> quit
 ```
 ## 记录交互过程（包含异常情况）
 ```
-[justinshao@DevTJ-todo-1507091995 ~]$ sftp tencentstaging@52.76.208.88
-Connecting to 52.76.208.88...
-tencentstaging@52.76.208.88's password: 
+[justinshao@DevTJ-todo-1507091995 ~]$ sftp qqstaging@32.64.205.89
+Connecting to 32.64.205.89...
+qqstaging@32.64.205.89's password: 
 Permission denied, please try again.
-tencentstaging@52.76.208.88's password: 
+qqstaging@32.64.205.89's password: 
 sftp> cd TencentStagin
 Couldn't canonicalise: No such file or directory
 sftp> cd TencentStaging
@@ -51,7 +51,7 @@ set timeout  600
 set FILE_NAME  [lindex $argv 0]
 # set FILE_NAME  [lindex $argv 1]
 
-spawn sftp tencentstaging@52.76.208.88
+spawn sftp qqstaging@32.64.205.89
 expect {
   "(yes/no)?" {send "yes\r"; expect_continue}
   "*password:" {send "alex123!@#\r"}
@@ -78,13 +78,13 @@ exit 0
 ## 测试expect脚本
 ```
 [justinshao@DevTJ-todo-1507091995 ~/tranglo/popen]$ ./sftp_get.exp DAILY_STATEMENT_ID_2017-12-30.csv
-spawn sftp tencentstaging@52.76.208.88
-Connecting to 52.76.208.88...
-tencentstaging@52.76.208.88's password: 
+spawn sftp qqstaging@32.64.205.89
+Connecting to 32.64.205.89...
+qqstaging@32.64.205.89's password: 
 sftp> cd TencentStaging
 sftp> get DAILY_STATEMENT_ID_2017-12-30.csv
 Fetching /TencentStaging/DAILY_STATEMENT_ID_2017-12-30.csv to DAILY_STATEMENT_ID_2017-12-30.csv
-/TencentStaging/DAILY_STATEMENT_ID_2017-12-30.csv                                                                                                  100% 1422     1.4KB/s   00:00    
+/TencentStaging/DAILY_STATEMENT_ID_2017-12-30.csv    100%  1422    1.4KB/s  00:00    
 sftp> quit
 [justinshao@DevTJ-todo-1507091995 ~/tranglo/popen]$ 
 ```
